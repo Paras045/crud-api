@@ -1,107 +1,339 @@
-# Task API
+# Task CRUD API
 
-A simple REST API for managing a to-do list using Node.js and Express.
+A simple CRUD REST API built with **Node.js, Express.js, and SQLite**.
 
-This project demonstrates the four CRUD operations:
+This project started as an in-memory CRUD API and was upgraded to use a real SQLite database. The API endpoints remain the same, while the data is now stored persistently in SQLite.
 
-- Create tasks
-- Read tasks
-- Update tasks
-- Delete tasks
+## 🚀 Features
 
-The API stores tasks **in memory**, so the data resets whenever the server restarts.
+- RESTful CRUD API
+- SQLite database with `better-sqlite3`
+- Persistent task storage
+- Automatic database creation
+- Automatic `tasks` table creation
+- Three sample tasks inserted when the table is empty
+- Input validation
+- Proper HTTP status codes
+- Layered project structure
+- Swagger / OpenAPI documentation
+- Environment variable configuration
+- SQL queries for database operations
 
-## Installation
+---
 
-Clone the repository:
+## 🛠️ Tech Stack
 
-```bash
-git clone https://github.com/Paras045/crud-api.git
-cd crud-api
-```
+- **Node.js**
+- **Express.js**
+- **SQLite**
+- **better-sqlite3**
+- **Swagger UI / OpenAPI**
+- **dotenv**
 
-Install the dependencies:
+---
 
-```bash
-npm install
-```
-
-Start the server:
-
-```bash
-node server.js
-```
-
-The API will run at:
-
-`http://localhost:3000`
-
-Swagger documentation is available at:
-
-`http://localhost:3000/docs`
-
-## API Endpoints
-
-| Method | Endpoint | Description |
-|---|---|---|
-| GET | `/` | Get API information |
-| GET | `/health` | Check server health |
-| GET | `/tasks` | Get all tasks |
-| GET | `/tasks/:id` | Get a single task |
-| POST | `/tasks` | Create a new task |
-| PUT | `/tasks/:id` | Update a task |
-| DELETE | `/tasks/:id` | Delete a task |
-
-## Example Request
-
-Get all tasks:
-
-```bash
-curl -i http://localhost:3000/tasks
-```
-
-Example response:
+## 📁 Project Structure
 
 ```text
-HTTP/1.1 200 OK
-Content-Type: application/json; charset=utf-8
+crud-api/
+│
+├── controllers/
+│   └── taskController.js
+│
+├── models/
+│   └── taskModel.js
+│
+├── routes/
+│   └── taskRoutes.js
+│
+├── screenshots/
+│   └── database.png
+│
+├── database.js
+├── server.js
+├── tasks.db
+├── .env
+├── .gitignore
+├── package.json
+├── package-lock.json
+└── README.md
 
-[{"id":1,"title":"Learn JavaScript","done":false},{"id":2,"title":"Build CRUD API","done":false}]
-```
+🗄️ Database
+This project uses SQLite for persistent data storage.
+SQLite was chosen because it is lightweight and does not require a separate database server. The entire database is stored in a single file.
+The database file is:
+tasks.db
 
-The `200 OK` status confirms that the request was successful.
+The database is automatically created when the application starts if it does not already exist.
+The tasks table is also automatically created if it does not exist.
+Tasks Table
+Column	Type	Description
+id	INTEGER	Primary key
+title	TEXT	Task title
+done	INTEGER	Completion status (0 or 1)
 
-## Swagger UI
 
-Interactive API documentation is available at:
+Three sample tasks are automatically inserted only when the table is empty.
+🔌 API Endpoints
+Method	Endpoint	Description
+GET	/tasks	Get all tasks
+GET	/tasks/:id	Get a task by ID
+POST	/tasks	Create a new task
+PUT	/tasks/:id	Update a task
+DELETE	/tasks/:id	Delete a task
 
-`http://localhost:3000/docs`
 
-Swagger UI provides a visual interface for testing all CRUD endpoints:
+📖 Swagger Documentation
+The API includes interactive Swagger/OpenAPI documentation.
+After starting the server, open:
+http://localhost:3000/docs
 
-- Create a task with `POST /tasks`
-- Read tasks with `GET /tasks`
-- Update a task with `PUT /tasks/:id`
-- Delete a task with `DELETE /tasks/:id`
+Swagger allows you to test all CRUD endpoints directly from the browser.
+⚙️ Environment Configuration
+The application uses environment variables through dotenv.
+Create a .env file in the project root:
+PORT=3000
 
-### Swagger Screenshot
+The server uses the configured port and falls back to port 3000 if no port is provided.
+const port = process.env.PORT || 3000;
 
-![Swagger UI](swagger.png)
+The .env file is excluded from Git using .gitignore.
+🚀 Getting Started
+1. Clone the repository
+git clone https://github.com/Paras045/crud-api.git
 
-## CRUD Test Flow
+2. Enter the project directory
+cd crud-api
 
-The API was tested through both `curl` and Swagger UI.
+3. Install dependencies
+npm install
 
-The complete CRUD flow is:
+4. Create the environment file
+Create a .env file:
+PORT=3000
 
-1. **Create** — `POST /tasks` returns `201 Created`
-2. **Read** — `GET /tasks` and `GET /tasks/:id` return `200 OK`
-3. **Update** — `PUT /tasks/:id` returns `200 OK`
-4. **Delete** — `DELETE /tasks/:id` returns `204 No Content`
-5. Invalid or unknown tasks return `400 Bad Request` or `404 Not Found` as appropriate.
+5. Start the server
+node server.js
 
-## Notes
+You should see:
+Server is running on http://localhost:3000
 
-- Tasks are stored in memory.
-- Data is reset when the server restarts.
-- No database is used in this assignment.
+The database will automatically be created if it does not already exist.
+🧪 Testing the API
+Get all tasks
+GET /tasks
+
+Example:
+[
+  {
+    "id": 10,
+    "title": "TASK 1",
+    "done": 0
+  },
+  {
+    "id": 11,
+    "title": "TASK 2",
+    "done": 0
+  },
+  {
+    "id": 12,
+    "title": "TASK 3",
+    "done": 0
+  }
+]
+
+Get a task by ID
+GET /tasks/10
+
+Example response:
+{
+  "id": 10,
+  "title": "TASK 1",
+  "done": 0
+}
+
+If the task does not exist:
+404
+
+{
+  "error": "Task 10 not found"
+}
+
+Create a task
+POST /tasks
+
+Request body:
+{
+  "title": "Learn SQLite"
+}
+
+Successful response:
+201 Created
+
+Example:
+{
+  "id": 13,
+  "title": "Learn SQLite",
+  "done": 0
+}
+
+Update a task
+PUT /tasks/13
+
+Request body:
+{
+  "title": "Learn SQLite",
+  "done": true
+}
+
+Successful response:
+200 OK
+
+Example:
+{
+  "id": 13,
+  "title": "Learn SQLite",
+  "done": 1
+}
+
+The API accepts true / false from the client and stores the SQLite value as 1 / 0.
+Delete a task
+DELETE /tasks/13
+
+Successful response:
+204 No Content
+
+The response contains no JSON body.
+✅ Validation
+The API validates incoming requests.
+Missing or invalid title
+{
+  "title": 123
+}
+
+Returns:
+400 Bad Request
+
+{
+  "error": "Title must be a non-empty string"
+}
+
+Invalid done value
+{
+  "done": "true"
+}
+
+Returns:
+400 Bad Request
+
+{
+  "error": "Done must be true or false"
+}
+
+Missing task
+Requests for a task that does not exist return:
+404 Not Found
+
+🧠 SQL Queries
+The database was also explored manually using DB Browser for SQLite.
+List all tasks
+SELECT * FROM tasks;
+
+Show completed tasks
+SELECT * FROM tasks
+WHERE done = 1;
+
+Count all tasks
+SELECT COUNT(*) FROM tasks;
+
+Mark every task as completed
+UPDATE tasks
+SET done = 1;
+
+Delete all completed tasks
+DELETE FROM tasks
+WHERE done = 1;
+
+Changes made directly to the SQLite database are reflected immediately when the API reads from the database.
+📸 Database Screenshot
+The SQLite database was opened using DB Browser for SQLite.
+ 
+The database viewer shows the tasks table with its stored task records.
+🔄 Data Persistence
+In the original version, tasks were stored in an in-memory JavaScript array:
+Client
+   ↓
+API
+   ↓
+In-memory array
+
+After connecting SQLite, the architecture became:
+Client
+   ↓
+Express API
+   ↓
+SQL Queries
+   ↓
+SQLite
+   ↓
+tasks.db
+
+Because the tasks are stored in tasks.db, the data survives when the server is restarted.
+🏗️ Architecture
+The project uses a layered structure:
+Client
+   ↓
+Routes
+   ↓
+Controllers
+   ↓
+Models
+   ↓
+SQLite Database
+
+Routes
+Define the API endpoints and HTTP methods.
+Controllers
+Handle the incoming request and determine the appropriate response.
+Models
+Handle interaction with the SQLite database.
+Database
+SQLite permanently stores the task data in tasks.db.
+📊 HTTP Status Codes
+Status Code	Meaning
+200	Successful request
+201	Resource created
+204	Resource deleted successfully
+400	Invalid request
+404	Resource not found
+
+
+🎯 Assignment Requirements
+This project satisfies the main requirements of W3 · A1 — Connecting your CRUD to the database:
+- [x] API exposes the same CRUD endpoints
+- [x] Tasks are stored in SQLite
+- [x] Data survives server restarts
+- [x] Database is automatically created
+- [x] tasks table is automatically created
+- [x] Three example tasks are inserted only when the table is empty
+- [x] CRUD operations use SQL queries
+- [x] Unknown IDs return 404
+- [x] Invalid requests return 400
+- [x] SQLite database explored using a database viewer
+- [x] README updated with database documentation
+- [x] Database screenshot included
+📌 Project Repository
+GitHub:
+https://github.com/Paras045/crud-api
+👨‍💻 Author
+Paras Gunjavate
+Computer Engineering Student
+GitHub:
+https://github.com/Paras045
+
+### One thing before you commit
+
+Your README references:
+
+```text
+screenshots/database.png

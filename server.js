@@ -201,11 +201,11 @@ const getCreatedTask = db.prepare(
 app.post("/tasks", (req, res) => {
     const { title } = req.body;
 
-    if (!title || title.trim() === "") {
-        return res.status(400).json({
-            error: "Title is required"
-        });
-    }
+    if (typeof title !== "string" || title.trim() === "") {
+    return res.status(400).json({
+        error: "Title must be a non-empty string"
+    });
+}
 
     const result = insertTask.run(title.trim(), 0);
 
@@ -223,7 +223,7 @@ app.put("/tasks/:id", (req, res) => {
     const { title, done } = req.body;
     const id = req.params.id;
 
-    // At least one field must be provided
+    // At least one field is required
     if (title === undefined && done === undefined) {
         return res.status(400).json({
             error: "Title or done is required"
@@ -252,51 +252,49 @@ app.put("/tasks/:id", (req, res) => {
 
     let result;
 
-    // Update both fields
+    // Both title and done
     if (title !== undefined && done !== undefined) {
-        const updateTask = db.prepare(
+        const update = db.prepare(
             "UPDATE tasks SET title = ?, done = ? WHERE id = ?"
         );
 
-        result = updateTask.run(
+        result = update.run(
             title.trim(),
             done ? 1 : 0,
             id
         );
     }
 
-    // Update title only
+    // Title only
     else if (title !== undefined) {
-        const updateTask = db.prepare(
+        const update = db.prepare(
             "UPDATE tasks SET title = ? WHERE id = ?"
         );
 
-        result = updateTask.run(
+        result = update.run(
             title.trim(),
             id
         );
     }
 
-    // Update done only
+    // Done only
     else {
-        const updateTask = db.prepare(
+        const update = db.prepare(
             "UPDATE tasks SET done = ? WHERE id = ?"
         );
 
-        result = updateTask.run(
+        result = update.run(
             done ? 1 : 0,
             id
         );
     }
 
-    // Task doesn't exist
     if (result.changes === 0) {
         return res.status(404).json({
             error: `Task ${id} not found`
         });
     }
 
-    // Get updated task
     const task = getTaskById.get(id);
 
     res.status(200).json(task);

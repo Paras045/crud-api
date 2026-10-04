@@ -1,8 +1,12 @@
 const express = require("express");
 const swaggerUi = require("swagger-ui-express");
+const db = require("./database");
 
 const app = express();
+const port = 3000;
+
 app.use(express.json());
+
 const swaggerDocument = {
     openapi: "3.0.0",
     info: {
@@ -144,46 +148,55 @@ const swaggerDocument = {
         }
     }
 };
-app.use("/docs", swaggerUi.serve, swaggerUi.setup(swaggerDocument));
-const port = 3000;
 
-const tasks = [
-    {
-        id: 1,
-        title: "Learn JavaScript",
-        done: false
-    },
-    {
-        id: 2,
-        title: "Build CRUD API",
-        done: false
-    },
-    {
-        id: 3,
-        title: "Push project to GitHub",
-        done: false
-    }
-];
+app.use(
+    "/docs",
+    swaggerUi.serve,
+    swaggerUi.setup(swaggerDocument)
+);
 
 
+// ==================== GET ALL TASKS ====================
+
+const getAllTasks = db.prepare("SELECT * FROM tasks");
 
 app.get("/tasks", (req, res) => {
+    const tasks = getAllTasks.all();
+
     res.json(tasks);
-})
+});
+
+
+// ==================== GET TASK BY ID ====================
+
+const getTaskById = db.prepare(
+    "SELECT * FROM tasks WHERE id = ?"
+);
 
 app.get("/tasks/:id", (req, res) => {
-    const task = tasks.find(
-        (task) => task.id === Number(req.params.id)
-    );
+    const id = req.params.id;
+
+    const task = getTaskById.get(id);
 
     if (!task) {
         return res.status(404).json({
-            error: `Task ${req.params.id} not found`
+            error: `Task ${id} not found`
         });
     }
 
     res.json(task);
 });
+
+
+// ==================== CREATE TASK ====================
+
+const insertTask = db.prepare(
+    "INSERT INTO tasks (title, done) VALUES (?, ?)"
+);
+
+const getCreatedTask = db.prepare(
+    "SELECT * FROM tasks WHERE id = ?"
+);
 
 app.post("/tasks", (req, res) => {
     const { title } = req.body;
@@ -194,78 +207,127 @@ app.post("/tasks", (req, res) => {
         });
     }
 
-    const newTask = {
-        id: tasks.length + 1,
-        title: title.trim(),
-        done: false
-    };
+    const result = insertTask.run(title.trim(), 0);
 
-    tasks.push(newTask);
+    const id = result.lastInsertRowid;
 
-    res.status(201).json(newTask);
+    const task = getCreatedTask.get(id);
+
+    res.status(201).json(task);
 });
 
+
+// ==================== UPDATE TASK ====================
+
 app.put("/tasks/:id", (req, res) => {
-    const task = tasks.find(
-        (task) => task.id === Number(req.params.id)
-    );
-
-    if (!task) {
-        return res.status(404).json({
-            error: `Task ${req.params.id} not found`
-        });
-    }
-
     const { title, done } = req.body;
+    const id = req.params.id;
 
-    if (
-        req.body.title === undefined &&
-        req.body.done === undefined
-    ) {
+    // At least one field must be provided
+    if (title === undefined && done === undefined) {
         return res.status(400).json({
             error: "Title or done is required"
         });
     }
 
-    if (title !== undefined) {
-        if (typeof title !== "string" || title.trim() === "") {
-            return res.status(400).json({
-                error: "Title must be a non-empty string"
-            });
-        }
-
-        task.title = title.trim();
-    }
-
-    if (done !== undefined) {
-        if (typeof done !== "boolean") {
-            return res.status(400).json({
-                error: "Done must be true or false"
-            });
-        }
-
-        task.done = done;
-    }
-
-    res.json(task);
-});
-
-app.delete("/tasks/:id", (req, res) => {
-    const index = tasks.findIndex(
-        (task) => task.id === Number(req.params.id)
-    );
-
-    if (index === -1) {
-        return res.status(404).json({
-            error: `Task ${req.params.id} not found`
+    // Validate title
+    if (
+        title !== undefined &&
+        (typeof title !== "string" || title.trim() === "")
+    ) {
+        return res.status(400).json({
+            error: "Title must be a non-empty string"
         });
     }
 
-    tasks.splice(index, 1);
+    // Validate done
+    if (
+        done !== undefined &&
+        typeof done !== "boolean"
+    ) {
+        return res.status(400).json({
+            error: "Done must be true or false"
+        });
+    }
+
+    let result;
+
+    // Update both fields
+    if (title !== undefined && done !== undefined) {
+        const updateTask = db.prepare(
+            "UPDATE tasks SET title = ?, done = ? WHERE id = ?"
+        );
+
+        result = updateTask.run(
+            title.trim(),
+            done ? 1 : 0,
+            id
+        );
+    }
+
+    // Update title only
+    else if (title !== undefined) {
+        const updateTask = db.prepare(
+            "UPDATE tasks SET title = ? WHERE id = ?"
+        );
+
+        result = updateTask.run(
+            title.trim(),
+            id
+        );
+    }
+
+    // Update done only
+    else {
+        const updateTask = db.prepare(
+            "UPDATE tasks SET done = ? WHERE id = ?"
+        );
+
+        result = updateTask.run(
+            done ? 1 : 0,
+            id
+        );
+    }
+
+    // Task doesn't exist
+    if (result.changes === 0) {
+        return res.status(404).json({
+            error: `Task ${id} not found`
+        });
+    }
+
+    // Get updated task
+    const task = getTaskById.get(id);
+
+    res.status(200).json(task);
+});
+
+
+// ==================== DELETE TASK ====================
+
+const deleteTask = db.prepare(
+    "DELETE FROM tasks WHERE id = ?"
+);
+
+app.delete("/tasks/:id", (req, res) => {
+    const id = req.params.id;
+
+    const result = deleteTask.run(id);
+
+    if (result.changes === 0) {
+        return res.status(404).json({
+            error: `Task ${id} not found`
+        });
+    }
 
     res.status(204).send();
 });
 
+
+// ==================== START SERVER ====================
+
 app.listen(port, () => {
-    console.log(`Server is running on http://localhost:${port}`);
+    console.log(
+        `Server is running on http://localhost:${port}`
+    );
 });

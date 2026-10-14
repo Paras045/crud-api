@@ -1,32 +1,73 @@
-const db = require("../database");
+const { pool } = require("../database");
 
-const getAllTasks = db.prepare(
-    "SELECT * FROM tasks"
-);
+// Get all tasks
+async function getAllTasks() {
+    const result = await pool.query(
+        "SELECT * FROM tasks ORDER BY id"
+    );
 
-const getTaskById = db.prepare(
-    "SELECT * FROM tasks WHERE id = ?"
-);
+    return result.rows;
+}
 
-const createTask = db.prepare(
-    "INSERT INTO tasks (title, done) VALUES (?, ?)"
-);
+// Get one task by ID
+async function getTaskById(id) {
+    const result = await pool.query(
+        "SELECT * FROM tasks WHERE id = $1",
+        [id]
+    );
 
-const updateTitle = db.prepare(
-    "UPDATE tasks SET title = ? WHERE id = ?"
-);
+    return result.rows[0];
+}
 
-const updateDone = db.prepare(
-    "UPDATE tasks SET done = ? WHERE id = ?"
-);
+// Create a task
+async function createTask(title, done) {
+    const result = await pool.query(
+        "INSERT INTO tasks (title, done) VALUES ($1, $2) RETURNING *",
+        [title, done]
+    );
 
-const updateTask = db.prepare(
-    "UPDATE tasks SET title = ?, done = ? WHERE id = ?"
-);
+    return result.rows[0];
+}
 
-const deleteTask = db.prepare(
-    "DELETE FROM tasks WHERE id = ?"
-);
+// Update only the title
+async function updateTitle(title, id) {
+    const result = await pool.query(
+        "UPDATE tasks SET title = $1 WHERE id = $2 RETURNING *",
+        [title, id]
+    );
+
+    return result.rows[0];
+}
+
+// Update only the done status
+async function updateDone(done, id) {
+    const result = await pool.query(
+        "UPDATE tasks SET done = $1 WHERE id = $2 RETURNING *",
+        [done, id]
+    );
+
+    return result.rows[0];
+}
+
+// Update both title and done status
+async function updateTask(title, done, id) {
+    const result = await pool.query(
+        "UPDATE tasks SET title = $1, done = $2 WHERE id = $3 RETURNING *",
+        [title, done, id]
+    );
+
+    return result.rows[0];
+}
+
+// Delete a task
+async function deleteTask(id) {
+    const result = await pool.query(
+        "DELETE FROM tasks WHERE id = $1",
+        [id]
+    );
+
+    return result.rowCount;
+}
 
 module.exports = {
     getAllTasks,

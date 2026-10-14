@@ -2,6 +2,7 @@ require("dotenv").config();
 const express = require("express");
 const swaggerUi = require("swagger-ui-express");
 const taskRoutes = require("./routes/taskRoutes");
+const { initializeDatabase } = require("./database");
 
 const app = express();
 const port =  process.env.PORT || 3000;;
@@ -358,10 +359,13 @@ app.use(
 
 app.use("/tasks", taskRoutes);
 
-// =========================
-// Start Server
-// =========================
+async function startServer() {
+    await initializeDatabase();
 
-app.listen(port, () => {
-    console.log(`Server is running on http://localhost:${port}`);
-});
+    app.listen(port, () => {
+        console.log(`Server is running on http://localhost:${port}`);
+    });
+}
+
+startServer();
+

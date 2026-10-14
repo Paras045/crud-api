@@ -1,36 +1,39 @@
-const Database = require("better-sqlite3");
-const path = require("path");
+const { Pool } = require("pg");
+require("dotenv").config();
 
-const db = new Database(
-    path.join(__dirname, "tasks.db")
-);
+const pool = new Pool({
+    connectionString: process.env.DATABASE_URL
+});
 
-// Create tasks table if it doesn't exist
-db.exec(`
-    CREATE TABLE IF NOT EXISTS tasks (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        title TEXT NOT NULL,
-        done INTEGER NOT NULL DEFAULT 0
-    )
-`);
+// Initialize the database
+async function initializeDatabase() {
+    // Create tasks table if it doesn't exist
+    await pool.query(`
+        CREATE TABLE IF NOT EXISTS tasks (
+            id SERIAL PRIMARY KEY,
+            title TEXT NOT NULL,
+            done BOOLEAN NOT NULL DEFAULT FALSE
+        )
+    `);
 
-// Insert sample tasks only when the table is empty
-db.exec(`
-    INSERT INTO tasks (title, done)
-    SELECT 'TASK 1', 0
-    WHERE NOT EXISTS (SELECT 1 FROM tasks)
+    // Insert sample tasks only when the table is empty
+    await pool.query(`
+        INSERT INTO tasks (title, done)
+        SELECT 'TASK 1', FALSE
+        WHERE NOT EXISTS (SELECT 1 FROM tasks)
 
-    UNION ALL
+        UNION ALL
 
-    SELECT 'TASK 2', 0
-    WHERE NOT EXISTS (SELECT 1 FROM tasks)
+        SELECT 'TASK 2', FALSE
+        WHERE NOT EXISTS (SELECT 1 FROM tasks)
 
-    UNION ALL
+        UNION ALL
 
-    SELECT 'TASK 3', 0
-    WHERE NOT EXISTS (SELECT 1 FROM tasks);
-`);
+        SELECT 'TASK 3', FALSE
+        WHERE NOT EXISTS (SELECT 1 FROM tasks)
+    `);
 
-console.log("✅ Connection verified. 'tasks.db' is ready for operations.");
+    console.log("✅ PostgreSQL database is ready.");
+}
 
-module.exports = db;
+module.exports = { pool, initializeDatabase };

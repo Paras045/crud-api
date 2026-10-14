@@ -480,3 +480,15 @@ A later sequential-scan run, with index scans disabled for that session, reporte
 Query timings can vary between runs because of caching and system conditions. The main observation is that PostgreSQL selected an index scan for the indexed lookup.
 
 The experiment used a separate test table to preserve the application's task records.
+
+#### Query Plan Evidence
+
+**Before — Sequential Scan**
+
+Recreated sequential-scan run (14.435 ms); this is not the original 10.439 ms baseline.
+
+![Recreated sequential scan query plan showing a 14.435 ms execution time](screenshots/a3-index-before.png)
+
+**After — Index Scan**
+
+![Index scan query plan showing an approximately 0.127 ms execution time](screenshots/a3-index-after.png)

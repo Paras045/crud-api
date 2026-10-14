@@ -426,3 +426,57 @@ The `.env` file should not be committed to Git. Docker Compose supplies the data
 - Docker
 - Docker Compose
 - Swagger UI
+
+## Optional Stretch Goals
+
+### Redis Integration
+
+Redis runs as a separate service in Docker Compose alongside the Node.js API and PostgreSQL database.
+
+The application connects to Redis using the `redis` Node.js client. During startup, it sends a `PING` command and confirms connectivity when Redis responds with `PONG`.
+
+Redis is configured using the `REDIS_URL` environment variable. Inside Docker Compose, the service hostname is `redis`.
+
+To check service health:
+
+```bash
+docker compose ps
+```
+
+To view the API startup logs:
+
+```bash
+docker compose logs api
+```
+
+### PostgreSQL Index Experiment
+
+A separate table, `task_search_demo`, was created with 100,000 rows to compare query plans without changing the application's actual `tasks` table.
+
+The query used was:
+
+```sql
+EXPLAIN ANALYZE
+SELECT *
+FROM task_search_demo
+WHERE title = 'Task 99999';
+```
+
+An index was created on the `title` column:
+
+```sql
+CREATE INDEX idx_task_search_demo_title
+ON task_search_demo (title);
+
+ANALYZE task_search_demo;
+```
+
+The original query plan, before the index was created, used a sequential scan and reported an execution time of **10.439 ms**.
+
+After creating the index, PostgreSQL used `idx_task_search_demo_title` and reported an execution time of approximately **0.127 ms** in the recorded run.
+
+A later sequential-scan run, with index scans disabled for that session, reported **14.435 ms**. This was a recreated comparison, not the original pre-index measurement.
+
+Query timings can vary between runs because of caching and system conditions. The main observation is that PostgreSQL selected an index scan for the indexed lookup.
+
+The experiment used a separate test table to preserve the application's task records.

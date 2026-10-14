@@ -1,4 +1,5 @@
 require("dotenv").config();
+const { connectRedis } = require("./redisClient");
 const express = require("express");
 const swaggerUi = require("swagger-ui-express");
 const taskRoutes = require("./routes/taskRoutes");
@@ -361,6 +362,7 @@ app.use("/tasks", taskRoutes);
 
 async function startServer() {
     await initializeDatabase();
+    await connectRedis();
 
     app.listen(port, () => {
         console.log(`Server is running on http://localhost:${port}`);
@@ -368,4 +370,3 @@ async function startServer() {
 }
 
 startServer();
-

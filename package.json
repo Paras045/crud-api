@@ -4,9 +4,9 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-  "start": "node server.js",
-  "test": "node test-db.js"
-},
+    "start": "node server.js",
+    "test": "node test-db.js"
+  },
   "keywords": [],
   "author": "",
   "license": "ISC",
@@ -15,6 +15,7 @@
     "dotenv": "^18.0.5",
     "express": "^5.2.1",
     "pg": "^8.23.1",
+    "redis": "^6.3.0",
     "swagger-ui-express": "^5.0.1"
   }
 }

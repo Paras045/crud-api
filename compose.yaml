@@ -8,6 +8,9 @@ services:
       PORT: 3000
       DATABASE_URL: postgres://postgres:dev@db:5432/tasks
       REDIS_URL: redis://redis:6379
+      SUPABASE_URL: ${SUPABASE_URL}
+      SUPABASE_PUBLISHABLE_KEY: ${SUPABASE_PUBLISHABLE_KEY}
+
     depends_on:
       db:
         condition: service_healthy

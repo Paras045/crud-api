@@ -78,12 +78,73 @@ Three sample tasks are automatically inserted only when the table is empty.
 | POST | `/tasks` | Create a new task |
 | PUT | `/tasks/:id` | Update a task |
 | DELETE | `/tasks/:id` | Delete a task |
+
+
+## Week 4 — Supabase Authentication
+
+The API uses Supabase Auth for user registration, login, and session management. Protected routes require a valid Supabase access token in the Authorization header.
+
+### Authentication Endpoints
+
+| Method | Endpoint | Authentication | Success |
+|---|---|---|---|
+| POST | `/auth/signup` | Public | 201 Created |
+| POST | `/auth/login` | Public | 200 OK |
+| POST | `/auth/logout` | Bearer token | 204 No Content |
+| GET | `/public/info` | Public | 200 OK |
+| GET | `/protected/profile` | Bearer token | 200 OK |
+| GET | `/protected/dashboard` | Bearer token | 200 OK |
+
+### Register a user
+
+Send a JSON request to `POST /auth/signup`:
+
+```json
+{
+  "email": "your-test-email@example.com",
+  "password": "your-test-password"
+}
+```
+
+### Log in
+
+Send the same credentials to `POST /auth/login`. A successful response contains `access_token` and `refresh_token`.
+
+### Access a protected endpoint
+
+Include the access token in the request header:
+
+```http
+Authorization: Bearer YOUR_ACCESS_TOKEN
+```
+
+Requests without a valid token are rejected with HTTP 401.
+
+### Public endpoint
+
+`GET /public/info` is accessible without authentication.
+
+### Swagger UI
+
+Start the application and visit:
+
+http://localhost:3000/docs
+
+The Swagger UI documents the task CRUD endpoints, authentication routes, public endpoint, and protected endpoints.
+
 ## 📖 Swagger Documentation
 The API includes interactive Swagger/OpenAPI documentation.
 After starting the server, open:
 http://localhost:3000/docs
 
 Swagger allows you to test all CRUD endpoints directly from the browser.
+
+### Week 4 — Authentication API Documentation
+
+The screenshot below shows the task CRUD, authentication, public, and protected endpoints documented in Swagger UI.
+
+![Week 4 Swagger UI showing all API endpoints](screenshots/week4-swagger.png)
+
 ## ⚙️ Environment Configuration
 The application uses environment variables through dotenv.
 Create a .env file in the project root:
@@ -93,27 +154,51 @@ The server uses the configured port and falls back to port 3000 if no port is pr
 const port = process.env.PORT || 3000;
 
 The .env file is excluded from Git using .gitignore.
-## 🚀 Getting Started
-1. Clone the repository
+## Getting Started
+
+### Prerequisites
+
+- Node.js and npm
+- Docker Desktop with Docker Compose
+- A Supabase project
+
+### 1. Clone the repository
+
+```bash
 git clone https://github.com/Paras045/crud-api.git
-
-2. Enter the project directory
 cd crud-api
+```
 
-3. Install dependencies
-npm install
+### 2. Configure environment variables
 
-4. Create the environment file
-Create a .env file:
-PORT=3000
+Copy `.env.example` to `.env`:
 
-5. Start the server
-node server.js
+```powershell
+Copy-Item .env.example .env
+```
 
-You should see:
-Server is running on http://localhost:3000
+Update `.env` with your own Supabase project URL and publishable key.
 
-The database will automatically be created if it does not already exist.
+Never commit your real `.env` file or share its credentials.
+
+### 3. Start the application
+
+```bash
+docker compose up --build -d
+```
+
+### 4. Verify the services
+
+```bash
+docker compose ps
+docker compose logs api
+```
+
+The API should be available at `http://localhost:3000`.
+
+### 5. Open Swagger UI
+
+Visit `http://localhost:3000/docs` to explore and test the API.
 ## 🧪 Testing the API
 Get all tasks
 GET /tasks

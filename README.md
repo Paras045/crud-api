@@ -95,6 +95,66 @@ The API uses Supabase Auth for user registration, login, and session management.
 | GET | `/protected/profile` | Bearer token | 200 OK |
 | GET | `/protected/dashboard` | Bearer token | 200 OK |
 
+
+### Request and Response Reference
+
+#### POST `/auth/signup`
+
+Register a new user.
+
+Request body:
+
+```json
+{
+  "email": "your-test-email@example.com",
+  "password": "your-test-password"
+}
+```
+
+Responses:
+- `201 Created` — User registration succeeded.
+- `400 Bad Request` — Missing fields or signup failed.
+
+#### POST `/auth/login`
+
+Authenticate an existing user with their email and password.
+
+Responses:
+- `200 OK` — Returns `access_token` and `refresh_token`.
+- `400 Bad Request` — Email or password is missing.
+- `401 Unauthorized` — Invalid login credentials.
+
+#### POST `/auth/logout`
+
+Requires `Authorization: Bearer YOUR_ACCESS_TOKEN`.
+
+Responses:
+- `204 No Content` — Logout succeeded.
+- `401 Unauthorized` — Missing token or logout failed.
+
+#### GET `/public/info`
+
+No authentication required.
+
+Returns:
+
+```json
+{
+  "message": "Welcome stranger! This info is public."
+}
+```
+
+#### GET `/protected/profile`
+
+Requires a valid Bearer access token. Returns the authenticated user's ID, email, and account creation timestamp.
+
+#### GET `/protected/dashboard`
+
+Requires a valid Bearer access token. Returns a welcome message and the authenticated user's ID and email.
+
+Protected endpoints reject missing or invalid access tokens with `401 Unauthorized`.
+
+
 ### Register a user
 
 Send a JSON request to `POST /auth/signup`:

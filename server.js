@@ -1,4 +1,7 @@
 require("dotenv").config();
+const protectedRoutes = require("./routes/protectedRoutes");
+const publicRoutes = require("./routes/publicRoutes");
+const authRoutes = require("./routes/authRoutes");
 const { connectRedis } = require("./redisClient");
 const express = require("express");
 const swaggerUi = require("swagger-ui-express");
@@ -8,7 +11,11 @@ const { initializeDatabase } = require("./database");
 const app = express();
 const port =  process.env.PORT || 3000;;
 
+
 app.use(express.json());
+app.use("/protected", protectedRoutes);
+app.use("/public", publicRoutes);
+app.use("/auth", authRoutes);
 
 // =========================
 // Swagger / OpenAPI
@@ -18,9 +25,9 @@ const swaggerDocument = {
     openapi: "3.0.0",
 
     info: {
-        title: "Task API",
+        title: "Task & Authentication API",
         version: "1.0.0",
-        description: "A simple CRUD API for managing tasks"
+        description: "Task CRUD API with Supabase authentication, public endpoints, and protected routes"
     },
 
     servers: [
@@ -30,17 +37,13 @@ const swaggerDocument = {
     ],
 
     paths: {
-        // =========================
-        // GET /tasks
-        // =========================
         "/tasks": {
             get: {
                 summary: "Get all tasks",
-
+                security: [{ bearerAuth: [] }],
                 responses: {
                     "200": {
                         description: "List of tasks",
-
                         content: {
                             "application/json": {
                                 schema: {
@@ -54,16 +57,11 @@ const swaggerDocument = {
                     }
                 }
             },
-
-            // =========================
-            // POST /tasks
-            // =========================
             post: {
                 summary: "Create a task",
-
+                security: [{ bearerAuth: [] }],
                 requestBody: {
                     required: true,
-
                     content: {
                         "application/json": {
                             schema: {
@@ -72,11 +70,9 @@ const swaggerDocument = {
                         }
                     }
                 },
-
                 responses: {
                     "201": {
                         description: "Task created",
-
                         content: {
                             "application/json": {
                                 schema: {
@@ -85,10 +81,8 @@ const swaggerDocument = {
                             }
                         }
                     },
-
                     "400": {
                         description: "Invalid input",
-
                         content: {
                             "application/json": {
                                 schema: {
@@ -124,7 +118,7 @@ const swaggerDocument = {
                         example: 1
                     }
                 ],
-
+                security: [{ bearerAuth: [] }],
                 responses: {
                     "200": {
                         description: "Task found",
@@ -183,6 +177,7 @@ const swaggerDocument = {
                         }
                     }
                 },
+                security: [{ bearerAuth: [] }],
 
                 responses: {
                     "200": {
@@ -242,6 +237,7 @@ const swaggerDocument = {
                         example: 1
                     }
                 ],
+                security: [{ bearerAuth: [] }],
 
                 responses: {
                     "204": {
@@ -261,6 +257,99 @@ const swaggerDocument = {
                     }
                 }
             }
+        },
+        "/auth/signup": {
+            post: {
+                summary: "Register a new user",
+                tags: ["Authentication"],
+                requestBody: {
+                    required: true,
+                    content: {
+                        "application/json": {
+                            schema: {
+                                type: "object",
+                                required: ["email", "password"],
+                                properties: {
+                                    email: { type: "string", format: "email" },
+                                    password: { type: "string", format: "password" }
+                                }
+                            }
+                        }
+                    }
+                },
+                responses: {
+                    "201": { description: "User registered" },
+                    "400": { description: "Signup failed or fields missing" }
+                }
+            }
+        },
+        "/auth/login": {
+            post: {
+                summary: "Log in and receive tokens",
+                tags: ["Authentication"],
+                requestBody: {
+                    required: true,
+                    content: {
+                        "application/json": {
+                            schema: {
+                                type: "object",
+                                required: ["email", "password"],
+                                properties: {
+                                    email: { type: "string", format: "email" },
+                                    password: { type: "string", format: "password" }
+                                }
+                            }
+                        }
+                    }
+                },
+                responses: {
+                    "200": { description: "Login successful; returns access and refresh tokens" },
+                    "400": { description: "Email or password missing" },
+                    "401": { description: "Invalid login credentials" }
+                }
+            }
+        },
+        "/auth/logout": {
+            post: {
+                summary: "Log out the current user",
+                tags: ["Authentication"],
+                security: [{ bearerAuth: [] }],
+                responses: {
+                    "204": { description: "Logout successful" },
+                    "401": { description: "Access token required or logout failed" }
+                }
+            }
+        },
+        "/public/info": {
+            get: {
+                summary: "Get public information",
+                tags: ["Public"],
+                responses: {
+                    "200": { description: "Public information returned" }
+                }
+            }
+        },
+        "/protected/profile": {
+            get: {
+                summary: "Get the authenticated user's profile",
+                tags: ["Protected"],
+                security: [{ bearerAuth: [] }],
+                responses: {
+                    "200": { description: "User profile returned" },
+                    "401": { description: "Missing or invalid access token" }
+                }
+            }
+        },
+        "/protected/dashboard": {
+            get: {
+                summary: "Get the protected dashboard",
+                tags: ["Protected"],
+                security: [{ bearerAuth: [] }],
+                responses: {
+                    "200": { description: "Dashboard returned" },
+                    "401": { description: "Missing or invalid access token" }
+                }
+            }
         }
     },
 
@@ -269,6 +358,15 @@ const swaggerDocument = {
     // =========================
 
     components: {
+        
+      securitySchemes: {
+        bearerAuth: {
+        type: "http",
+        scheme: "bearer",
+        bearerFormat: "JWT"
+    }
+    },
+
         schemas: {
             // =========================
             // Task response
